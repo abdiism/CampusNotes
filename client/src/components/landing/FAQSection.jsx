@@ -3,14 +3,14 @@ import React, { useState } from 'react';
 // Use questions from your original Faq.jsx or add new ones
 const faqsData = [
     {
-      question: "What is FindMyNotes?",
+      question: "What is CampusNotes?",
       answer:
-        "FindMyNotes is an online platform designed to facilitate the sharing and access of educational resources among college students. It allows users to upload and download study materials such as notes, presentations, and study guides.",
+        "CampusNotes is an online platform designed to facilitate the sharing and access of educational resources among college students. It allows users to upload and download study materials such as notes, presentations, and study guides.",
     },
     {
-      question: "Is FindMyNotes free to use?",
+      question: "Is CampusNotes free to use?",
       answer:
-        "Yes, FindMyNotes is currently free to use. We believe in making education accessible to everyone.",
+        "Yes, CampusNotes is currently free to use. We believe in making education accessible to everyone.",
     },
      {
       question: "What types of files can I upload?",

@@ -16,24 +16,15 @@ const About = () => {
             About Us
           </h1>
           <p className="mt-1 text-[15px] lg:mt-3">
-            Welcome to FindMyNotes, the ultimate hub for students to seamlessly
-            share and access educational resources. Our platform is designed
-            with a singular purpose – to make the exchange of study materials as
-            effortless as possible, fostering a collaborative and enriching
-            academic experience for students across colleges.
+            Welcome to CampusNotes, The central spot for easily sharing and finding study notes and resources with fellow students across different colleges.
           </p>
         </div>
         <div className="">
           <h1 className="relative w-fit text-2xl font-bold before:absolute before:top-[90%] before:h-[3px] before:w-[60%] before:bg-[#2563eb] lg:text-4xl lg:before:top-full">
-            Who We Are:
+            Why We Built This:
           </h1>
           <p className="mt-1 text-[15px] lg:mt-3">
-            FindMyNotes is more than just a website; it's a community-driven
-            initiative fueled by the passion for learning. Founded by a group of
-            dedicated students, our platform is a testament to the belief that
-            education should be a collective journey. Our team comprises tech
-            enthusiasts, educators, and creative minds, all united in the
-            mission to enhance the learning landscape.
+            CampusNotes started simple, we believe learning gets better when we collaborate. Tired of scattered notes and hard-to-find resources, we decided to build a platform dedicated to making study materials accessible for everyone. We're a mix of students, tech enthusiasts, and education advocates united by the goal of improving the student experience.
           </p>
         </div>
         <div className="">
@@ -41,10 +32,7 @@ const About = () => {
             Our Mission:
           </h1>
           <p className="mt-1 text-[15px] lg:mt-3">
-            At FindMyNotes, our mission is clear: to empower students by
-            providing a centralized platform where knowledge knows no
-            boundaries. We aim to break down the barriers to academic success,
-            making valuable study materials accessible to all.
+            It's straightforward, empower students by making knowledge sharing easy. We want to break down barriers so that valuable study guides and notes are just a click away, helping you and your peers succeed academically. Join us in building a smarter, more connected learning community!
           </p>
         </div>
       </div>

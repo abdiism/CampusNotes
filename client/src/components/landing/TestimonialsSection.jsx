@@ -8,7 +8,7 @@ const testimonials = [
     role: 'Engineering Student',
     // Use real image paths later
     imageUrl: '/images/testimonials/t2.jpg',
-    quote: "FindMyNotes saved me hours during exam prep! Finding notes from previous batches was a game-changer.",
+    quote: "CampusNotes saved me hours during exam prep! Finding notes from previous batches was a game-changer.",
   },
    {
     id: 2,

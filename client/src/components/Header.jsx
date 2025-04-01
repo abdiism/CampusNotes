@@ -42,7 +42,7 @@ const Header = () => {
         {/* Logo */}
         <div className="flex h-12 w-auto items-center justify-center overflow-hidden">
           <Link to="/" onClick={handleMobileLinkClick}> {/* Close menu on logo click */}
-            <img src="/logo.png" alt="FindMyNotes Logo" className="h-10 md:h-12" />
+            <img src="/logo.png" alt="CampusNotes Logo" className="h-10 md:h-12" />
           </Link>
         </div>
 

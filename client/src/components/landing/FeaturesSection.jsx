@@ -35,7 +35,7 @@ const FeaturesSection = () => {
             Everything You Need to Succeed
           </p>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
-            FindMyNotes provides the tools to manage your study materials effectively.
+          CampusNotes provides the tools to manage your study materials effectively.
           </p>
         </div>
 

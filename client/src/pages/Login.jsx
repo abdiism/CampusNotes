@@ -137,7 +137,7 @@ const Login = () => {
           </button>
 
           <div className="text-center text-sm text-gray-600">
-            New to FindMyNotes?{" "}
+            New to CampusNotes?{" "}
             <Link to="/signup" className="font-medium text-teal-600 hover:underline">
               Create an account
             </Link>
