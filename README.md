@@ -1,21 +1,2 @@
-
-## Installation
-
-
-```bash
-  git clone https://github.com/Yuvadi29/NewFMN
-```
-
-Get inside the server folder and run
-```bash
-cd server
-npm install
-nodemon index.js
-```
-
-Get inside the client folder and run
-```bash
-cd client
-npm install
-npm run dev
-```
+CampusNotes 📚✨
+A collaborative note-sharing platform designed for university students. Easily upload, organize, and access study materials, lecture notes, and exam guides. Stay ahead in your studies with shared knowledge from peers across different courses. 🚀
