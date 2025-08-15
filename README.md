@@ -42,7 +42,9 @@
 
 ### Overview
 
-*Provide a brief overview of your CampusNotes project here. Explain what it does and what problem it solves.*
+CampusNotes is a collaborative platform designed specifically for students. The core mission is to create a centralized hub where students can easily share and access course notes, study guides, and other academic materials.
+
+Often, valuable notes are scattered among students, making them difficult to find when you need them most. CampusNotes solves this problem by providing an easy-to-use application that empowers students to upload their own notes and benefit from the collective knowledge of their peers. Whether you're preparing for an exam or just catching up on a lecture, this platform helps you learn more effectively and succeed together.
 
 ---
 
