@@ -63,7 +63,7 @@ const HeroSection = () => {
            <div aria-hidden="true" className="relative hidden h-80 w-full overflow-hidden rounded-lg lg:block lg:h-auto">
               {/* Replace with a high-quality image showing the app or collaboration */}
                <img
-                 src="/herousefulIMG.jpeg" // Placeholder
+                 src="/herousefulIMG1.jpeg" // Placeholder
                  alt="the image for the hero section"
                  className="h-full w-full object-cover object-center"
                />

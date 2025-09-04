@@ -1,191 +1,208 @@
-const express = require("express");
-const dotenv = require("dotenv");
-const Notes = require("../Models/Notes"); // Ensure path is correct
-const multer = require("multer");
-const path = require("path");
-
-dotenv.config();
-
-const storage = multer.memoryStorage();
-var upload = multer({ storage: storage });
+// server/Controllers/NotesController.js
+const Notes = require("../Models/Notes");
+// const cloudinary = require('cloudinary').v2; // Not needed for uploadNote if storing locally
+// const fs = require('fs').promises;         // Not needed for uploadNote if multer handles file and we only store filename
 
 // Helper function to escape special characters for regular expressions
 function escapeRegex(string) {
-  if (typeof string !== 'string') {
+  if (typeof string !== 'string' || string.trim() === '') {
     return '';
   }
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// Cloudinary configuration (kept here if other functions like deleteNote might use it,
+// but not directly used by the reverted uploadNote for saving)
+const cloudinary = require('cloudinary').v2;
+if (!cloudinary.config().cloud_name) {
+    try {
+        cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+            secure: true,
+        });
+        console.log("Cloudinary configured via NotesController (for potential other uses like delete).");
+    } catch (configError) {
+        console.error("Cloudinary configuration error in NotesController:", configError);
+    }
+}
 
+
+// REVERTED uploadNote to use local file storage (filename from multer)
+// and use req.user.id for uploadedBy
 const uploadNote = async (req, res) => {
     try {
-        const fileName = req.body.title;
-        const fileDescription = req.body.description;
+        // Get userId from authenticated token (from protect middleware)
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ message: "User not authenticated." });
+        }
+        const authenticatedUserId = req.user.id;
+
+        const title = req.body.title; // From frontend (was fileName in your backup, assuming frontend sends title)
+        const description = req.body.description;
         const tagsInput = req.body.tags || '';
-        // Assuming you might use Cloudinary later or need file info differently
-        // Adjust how 'file' is handled based on your setup (Cloudinary URL vs filename)
-        const fileIdentifier = req.file ? req.file.filename : null; // Or Cloudinary URL if integrated
-        const uploadedBy = req.body.userId;
         const noteContent = req.body.noteContent || '';
 
-        console.log("--- Uploading Note ---");
-        // console.log("Raw Tags Input:", tagsInput); // Keep logs for debugging if needed
-        // console.log("Note Content Input:", noteContent);
+        // Get the filename from multer, which should have saved it locally
+        // This relies on Routes/notes.js having multer with diskStorage configured
+        const localFileIdentifier = req.file ? req.file.filename : null;
+
+        // console.log("--- Uploading Note (Local File Method) ---");
+        // console.log("Local filename from multer:", localFileIdentifier);
 
         const tagsArray = tagsInput.split(',')
                                 .map(tag => tag.trim())
                                 .filter(tag => tag !== '');
 
-        // console.log("Processed Tags Array:", tagsArray);
-
-        const newNoteData = { // Changed variable name slightly
-            fileName: fileName,
-            fileDescription: fileDescription,
+        const newNoteData = {
+            fileName: title, // Your NoteSchema uses fileName
+            fileDescription: description, // Your NoteSchema uses fileDescription
             tags: tagsArray,
             noteContent: noteContent,
-            // Save 'imageUrl' or 'files' based on your schema (assuming 'files' for now)
-            files: fileIdentifier, // Make sure 'files' or 'imageUrl' matches your schema field
-            uploadedBy: uploadedBy
+            files: localFileIdentifier, // Store the local filename (or null if no file)
+            uploadedBy: authenticatedUserId // Use ID from token
         };
 
-        const newNote = new Notes(newNoteData); // Create instance
-
-        // console.log("Document to be saved:", JSON.stringify(newNote, null, 2));
-
+        const newNote = new Notes(newNoteData);
         await newNote.save();
-        console.log("--- Note Saved ---");
-        res.status(201).send({ status: "Ok", message: "Note uploaded successfully", data: newNote }); // Send 201 Created status
+        // console.log("--- Note Saved (Referencing Local File) ---");
+        res.status(201).send({ status: "Ok", message: "Note uploaded successfully!", data: newNote });
 
     } catch (error) {
-        console.error("Error in uploadNote:", error);
+        console.error("Error in uploadNote (local storage approach):", error);
+        // Note: If an error occurs here, the file uploaded by multer to the local disk
+        // might need manual cleanup or a more robust error handling in the multer setup itself.
         res.status(400).json({ error: "Failed to upload note", details: error.message });
     }
 };
 
-// Function used for searching notes (e.g., by title/tag)
+// getNote function for searching ALL notes by title OR tag
+// (Authenticated access is still required by the 'protect' middleware on the route)
 const getNote = async (req, res) => {
     try {
-        const { title, tag } = req.query;
-        const query = {};
+        const { searchTerm } = req.query;
+        let query = {};
 
-        if (title) {
-            const escapedTitle = escapeRegex(title);
-            query.fileName = { $regex: escapedTitle, $options: "i" };
-        };
-
-        if (tag) {
-            const searchTag = tag.trim();
-            if (searchTag) {
-                 query.tags = searchTag; // Assumes 'tags' is an array field in your schema
+        if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim() !== "") {
+            const escapedSearchTerm = escapeRegex(searchTerm.trim());
+            if (escapedSearchTerm) {
+                const searchRegex = { $regex: escapedSearchTerm, $options: "i" };
+                query = { // Assign to query directly if searchTerm exists
+                    $or: [
+                        { fileName: searchRegex },
+                        { tags: searchRegex }
+                    ]
+                };
             }
-        };
+        }
+        // If no searchTerm or empty, query remains {}, finding all notes.
 
-        console.log("Executing DB Query with Populate:", JSON.stringify(query, null, 2));
+        // console.log("Executing PUBLIC Search DB Query for getNote:", JSON.stringify(query, null, 2));
 
-        // --- Modification: Added .populate() and .sort() ---
         const data = await Notes.find(query)
-                                .populate('uploadedBy', 'userName') // Gets User info, only selecting userName field
-                                .sort({ createdAt: -1 }); // Optional: Sorts newest first
-        // --- End Modification ---
+                                .populate('uploadedBy', 'userName profileImage')
+                                .sort({ createdAt: -1 });
 
-        console.log("Query Result Count:", data.length);
-        // Ensure the response structure matches what frontend expects e.g., { data: data }
+        // console.log("Public Search Query Result Count for getNote:", data.length);
         res.send({ status: "Ok", data: data });
 
     } catch (error) {
-        console.error("Error in getNote:", error); // Use console.error
-        res.status(500).json({ status: "Error", error: 'Failed to fetch notes', details: error.message });
+        console.error("Error in getNote (public search):", error);
+        res.status(500).json({ status: "Error", message: 'Failed to fetch notes', details: error.message });
     }
 };
 
-
-// Function to get notes by User ID (e.g., for a profile page)
-// Also add populate here if you need user info when fetching by ID
-const getNoteByID = async (req, res) => {
+// YOUR EXISTING getNoteByUserId (from your backup, I renamed it from getNoteByID for clarity with express params)
+// This should fetch notes for a specific user ID given in params,
+// but for security, it should ideally check if the logged-in user is authorized to see them,
+// or be intended for a specific use case like public profiles.
+// The version you provided earlier (getNoteByUserId) already used req.user.id, which is better.
+// I will use the version that uses req.user.id.
+const getNoteByUserId = async (req, res) => {
     try {
-        const userId = req.params.id;
-        console.log("Fetching notes for user ID:", userId);
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ status: "Error", message: "Not authorized or user ID missing from token" });
+        }
+        const authenticatedUserId = req.user.id;
+        // console.log("Fetching notes for authenticated user ID (getNoteByUserId):", authenticatedUserId);
 
-        // --- Modification: Add .populate() and .sort() here too if needed ---
-        const data = await Notes.find({ uploadedBy: userId })
-                                .populate('uploadedBy', 'userName') // Populate user info
-                                .sort({ createdAt: -1 }); // Optional sort
-        // --- End Modification ---
+        const data = await Notes.find({ uploadedBy: authenticatedUserId })
+                                .populate('uploadedBy', 'userName profileImage')
+                                .sort({ createdAt: -1 });
 
-        // Ensure the response structure matches what frontend expects e.g., { data: data }
         res.send({ status: "Ok", data: data });
 
     } catch (error) {
-        console.error("Error in getNoteByID:", error); // Use console.error
-        res.status(500).json({ status: "Error", error: 'Failed to fetch notes by ID', details: error.message });
+        console.error("Error in getNoteByUserId:", error);
+        res.status(500).json({ status: "Error", message: 'Failed to fetch user notes', details: error.message });
     }
 };
 
+
+// YOUR EXISTING deleteNote (with authorization check using req.user.id)
 const deleteNote = async (req, res) => {
-    const { id } = req.params; // Get the note ID from the URL parameter
-
+    const { id } = req.params;
     try {
-        // Find the note first to ensure it exists
         const note = await Notes.findById(id);
-
         if (!note) {
             return res.status(404).json({ status: "Error", message: "Note not found" });
         }
 
-        // --- Optional but Recommended: Authorization Check ---
-        // Check if the logged-in user is the one who uploaded the note.
-        // This assumes you have authentication middleware that adds user info to req, e.g., req.user.id
-        /*
-        if (!req.user || note.uploadedBy.toString() !== req.user.id) {
+        if (!req.user || !req.user.id || note.uploadedBy.toString() !== req.user.id) {
              return res.status(403).json({ status: "Error", message: "User not authorized to delete this note" });
         }
-        */
-        // --- End Optional Authorization Check ---
 
-        // If the note exists (and optionally, user is authorized), delete it
         await Notes.findByIdAndDelete(id);
-
+        // If you were serving files locally and want to delete them from server disk:
+        // if (note.files) {
+        //     const fs = require('fs').promises;
+        //     const path = require('path');
+        //     const filePath = path.join(__dirname, '..', 'uploads_notes', note.files); // Adjust path as needed
+        //     try {
+        //         await fs.unlink(filePath);
+        //         console.log("Deleted local file:", filePath);
+        //     } catch (fileError) {
+        //         console.error("Error deleting local file during note deletion:", fileError);
+        //     }
+        // }
         res.status(200).json({ status: "Ok", message: "Note deleted successfully" });
 
     } catch (error) {
         console.error("Error in deleteNote:", error);
-        // Handle potential errors like invalid ID format
         if (error.kind === 'ObjectId') {
              return res.status(400).json({ status: "Error", message: "Invalid Note ID format" });
         }
-        res.status(500).json({ status: "Error", error: 'Failed to delete note', details: error.message });
+        res.status(500).json({ status: "Error", message: 'Failed to delete note', details: error.message });
     }
 };
-const incrementViewCount = async (req, res) => {
-    const { id } = req.params; // Get note ID from URL
 
+// YOUR EXISTING incrementViewCount
+const incrementViewCount = async (req, res) => {
+    const { id } = req.params;
     try {
-        // Find the note by ID and atomically increment viewCount by 1
-        // { new: true } option returns the updated document (optional)
         const updatedNote = await Notes.findByIdAndUpdate(
             id,
-            { $inc: { viewCount: 1 } }, // Use $inc to increment
-            { new: true } // Return the modified document
+            { $inc: { viewCount: 1 } },
+            { new: true }
         );
-
         if (!updatedNote) {
-            // If note wasn't found with that ID
             return res.status(404).json({ status: "Error", message: "Note not found" });
         }
-
-        // Successfully incremented. Send back minimal response or updated note.
-        // Sending just success is often enough for this kind of action.
         res.status(200).json({ status: "Ok", message: "View count updated", newViewCount: updatedNote.viewCount });
-
     } catch (error) {
         console.error("Error incrementing view count:", error);
         if (error.kind === 'ObjectId') {
              return res.status(400).json({ status: "Error", message: "Invalid Note ID format" });
         }
-        res.status(500).json({ status: "Error", error: 'Failed to update view count', details: error.message });
+        res.status(500).json({ status: "Error", message: 'Failed to update view count', details: error.message });
     }
 };
 
-// Ensure all needed functions are exported
-module.exports = { uploadNote, getNote, getNoteByID , deleteNote , incrementViewCount };
+module.exports = {
+    uploadNote,
+    getNote,
+    getNoteByUserId, // Using the one that takes ID from req.user
+    deleteNote,
+    incrementViewCount
+};

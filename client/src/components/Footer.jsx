@@ -7,7 +7,7 @@ const Footer = () => {
   const currentYear = new Date().getFullYear(); // Get current year dynamically
 
   return (
-    <footer className="bg-gray-800 text-gray-300">
+    <footer className="bg-zinc-700 text-gray-300">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:py-16 lg:px-8">
         <div className="xl:grid xl:grid-cols-3 xl:gap-8">
           {/* About Section */}
@@ -17,11 +17,7 @@ const Footer = () => {
               Making study materials accessible and organized for college students everywhere.
             </p>
             {/* Social Media Links Placeholder */}
-            {/* <div className="flex space-x-6">
-               <a href="#" className="text-gray-400 hover:text-gray-300"><FaFacebook className="h-6 w-6" /></a>
-               <a href="#" className="text-gray-400 hover:text-gray-300"><FaTwitter className="h-6 w-6" /></a>
-               <a href="#" className="text-gray-400 hover:text-gray-300"><FaLinkedin className="h-6 w-6" /></a>
-            </div> */}
+            
           </div>
 
           {/* Links Grid */}
@@ -41,9 +37,7 @@ const Footer = () => {
               <div className="mt-12 md:mt-0">
                 <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Legal</h3>
                 <ul role="list" className="mt-4 space-y-2">
-                   {/* Add Privacy Policy / Terms links later */}
-                  {/* <li><a href="#" className="text-base text-gray-300 hover:text-white">Privacy Policy</a></li>
-                  <li><a href="#" className="text-base text-gray-300 hover:text-white">Terms of Service</a></li> */}
+                
                 </ul>
               </div>
             </div>
@@ -52,12 +46,12 @@ const Footer = () => {
                  <div>
                     <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-400">Contact</h3>
                      <ul role="list" className="mt-4 space-y-2">
-                        {/* Use mailto link for email */}
+                        {/* using mailto link for email */}
                         <li><a href="mailto:CampusNotes1230@gmail.com" className="text-base text-gray-300 hover:text-white">CampusNotes1230@gmail.com</a></li>
-                        {/* Display phone numbers if needed, but email is often preferred */}
-                        <li className="text-base text-gray-400">(Contact via Email Recommended)</li>
-                        {/* <li className="text-base text-gray-300">+91 99879 90097</li> */}
-                        {/* <li className="text-base text-gray-300">+91 97649 35361</li> */}
+                        
+                       
+                        
+                      
                     </ul>
                  </div>
             </div>

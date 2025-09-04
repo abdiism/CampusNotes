@@ -5,7 +5,7 @@ const About = () => {
     <div className="h-heightWithoutNavbar flex flex-col items-center justify-start p-5 lg:flex-row">
       <div className="grid h-full w-full place-content-center">
         <img
-          src="./aboutUs.svg"
+          src="./aboutUs.png"
           alt=""
           className="w-[300px] sm:w-[400px]  md:w-[450px] lg:w-[600px]"
         />

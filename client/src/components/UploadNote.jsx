@@ -1,27 +1,28 @@
+// client/src/components/UploadNote.jsx
 import axios from "axios";
 import React, { useState } from "react";
-import { useSelector } from "react-redux";
-import { ToastContainer, toast } from 'react-toastify'; // Import toast
-import 'react-toastify/dist/ReactToastify.css'; // Import toast CSS
-import { FaUpload } from "react-icons/fa"; // Example icon
+// import { useSelector } from "react-redux"; // Not strictly needed if userId comes from token on backend
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { FaUpload } from "react-icons/fa";
 
 const UploadNote = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState("");
-  const [noteText, setNoteText] = useState(""); // State for text content
-  const [file, setFile] = useState(null); // State for PDF or Image file
-  const [fileName, setFileName] = useState(""); // State to display selected file name
+  const [noteText, setNoteText] = useState("");
+  const [file, setFile] = useState(null);
+  const [fileName, setFileName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const user = useSelector((state) => state.user.userData);
-  const userId = user._id;
+  // const user = useSelector((state) => state.user.userData); // Original
+  // const userId = user?._id; // Original, we will get userId from token on backend
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
-      setFileName(selectedFile.name); // Show the selected file name
+      setFileName(selectedFile.name);
     } else {
       setFile(null);
       setFileName("");
@@ -32,76 +33,92 @@ const UploadNote = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Validation: Ensure at least title and (text or file) is provided
     if (!title.trim()) {
         toast.error("Please provide a title for your note.");
         setIsLoading(false);
         return;
     }
     if (!noteText.trim() && !file) {
-        toast.error("Please provide either text content or upload a file (PDF/Image).");
+        toast.error("Please provide either text content or upload a file.");
         setIsLoading(false);
         return;
     }
 
+    // >>> NEW: Retrieve the token from localStorage
+    const token = localStorage.getItem('authToken');
+
+    if (!token) {
+        toast.error("You must be logged in to upload a note.");
+        setIsLoading(false);
+        return;
+    }
 
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("tags", tags);
-    formData.append("userId", userId);
-    formData.append("noteContent", noteText); // Use "noteContent" as the key
+    formData.append("tags", tags); // Backend will split this comma-separated string
+    formData.append("noteContent", noteText);
+    // formData.append("userId", userId); // <<< REMOVE THIS LINE
 
     if (file) {
-      formData.append("file", file); // Add file (PDF or Image)
+      formData.append("file", file); // 'file' is the key multer expects on backend
     }
 
-    // Optional: Log formData entries for debugging (remove in production)
-    // for (let [key, value] of formData.entries()) {
-    //   console.log(`${key}: ${value}`);
-    // }
-
-
     try {
-      // IMPORTANT: You might need a different backend endpoint for this combined upload.
-      // Using "/notes/upload" for now, but update if your backend requires it.
       const result = await axios.post(
-        "http://localhost:6969/notes/upload", // Verify/Update this endpoint
+        "http://localhost:6969/notes/upload",
         formData,
         {
           headers: {
-            // Keep as multipart/form-data if sending files
             "Content-Type": "multipart/form-data",
+            // >>> NEW: Add Authorization header
+            'Authorization': `Bearer ${token}`
           },
-        },
+        }
       );
-      console.log("Note Upload Response: ", result);
-      toast.success("Note Uploaded Successfully!");
+      // console.log("Note Upload Response: ", result);
+      toast.success(result.data.message || "Note Uploaded Successfully!");
 
-      // Reset form fields after successful upload
       setTitle("");
       setDescription("");
       setTags("");
       setNoteText("");
       setFile(null);
       setFileName("");
-      // Reset the file input visually (optional but good UX)
       if (document.getElementById("dropzone-file")) {
           document.getElementById("dropzone-file").value = "";
       }
 
     } catch (error) {
       console.error("Failed to submit note: ", error);
-      toast.error(error.response?.data?.message || "Failed to upload note. Please try again.");
+      // More detailed error handling from backend
+      if (error.response && error.response.data) {
+        if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+            // Handle express-validator errors if your /notes/upload route has them
+            const firstError = error.response.data.errors[0];
+            toast.error(firstError.msg || "Please check your input.");
+        } else if (error.response.data.message) {
+            toast.error(error.response.data.message); // e.g., "Not authorized"
+        } else if (error.response.data.error) { // Backend might send { error: "message" }
+            toast.error(error.response.data.error);
+        }
+         else {
+            toast.error("Failed to upload note. Please try again.");
+        }
+      } else {
+        toast.error("An unexpected error occurred. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Your JSX remains the same
   return (
     <div className="flex w-full justify-center py-8 px-4 bg-gray-50">
          <ToastContainer position="top-right" autoClose={3000} />
         <form className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-md sm:p-8 space-y-5" onSubmit={submitNote}>
+            {/* ... rest of your form JSX ... (no changes needed here from your provided code) */}
             <h1 className="text-center text-2xl font-bold text-gray-800 sm:text-3xl">
                 Create a New Note
             </h1>
@@ -186,7 +203,6 @@ const UploadNote = () => {
                     <input
                     type="file"
                     id="dropzone-file"
-                    // Accept PDF and common image types
                     accept="application/pdf, image/png, image/jpeg, image/gif"
                     onChange={handleFileChange}
                     className="hidden"
@@ -205,7 +221,6 @@ const UploadNote = () => {
             </button>
         </form>
 
-      {/* Simple CSS for input fields consistency */}
       <style jsx>{`
         .input-field {
           display: block;
